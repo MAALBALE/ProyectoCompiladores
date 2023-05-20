@@ -1,0 +1,155 @@
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+import java.io.File;
+import java.io.FileNotFoundException;
+
+public class lexer {
+
+    // Lista de palabras reservadas
+    private static final List<String> PALABRAS_RESERVADAS = Arrays.asList(
+        "Inicio","Jugador","CrearJugador","Imprimir","Repetir","LeerPosicion",
+        "FinRepetir","Resultado","Fin"
+    );
+
+    // Metodo para reconocer la posición en la que se encontró el lexema
+    public static void printPos(int fila,int columna){
+        String filaS=String.valueOf(fila);
+        String columnaS=String.valueOf(columna);
+        System.out.print("Linea: "+filaS+"["+columnaS+"] ");
+    }
+
+    public static void main(String[] args) {
+        // Se toma todo el texto del archivo
+        String path = "codigo.txt";
+        String codigoFuente ="";
+        try {
+            File archivo = new File(path);
+            Scanner scanner = new Scanner(archivo);
+
+            while (scanner.hasNextLine()) {
+                String token = scanner.nextLine();
+                codigoFuente+=token+"\n";
+            }
+             System.out.println(codigoFuente);
+            scanner.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("Archivo no encontrado: " + e.getMessage());
+        }
+        
+        // ITERAMOS SOBRE LA CADENA DEL CODIGO
+        int index = 0;
+        int fila=0,columna=0;
+        while (index < codigoFuente.length()) {
+            char currentChar = codigoFuente.charAt(index);
+            columna+=1;
+
+            if(currentChar=='\n'){
+                fila+=1;
+                columna=0;
+            }
+
+            ////////////////////////////////////////revisa  coma
+            if (currentChar==','){
+                printPos(fila,columna);
+                System.out.println("Coma: " + currentChar);
+                index++;
+                continue;
+            }
+
+            ////////////////////////////////////////revisa el delimitador
+            if (currentChar == '(' || currentChar == ')') 
+            {
+                printPos(fila,columna);
+                System.out.println("Delimitador: " + currentChar);
+                index++;
+                continue;
+            }
+            
+            ///////////////////////////////////////revisa identificador
+            if (Character.isLetter(currentChar) || currentChar == '_') {
+                StringBuilder identificador = new StringBuilder();
+                identificador.append(currentChar);
+                index++;
+                
+                // Continuar agregando caracteres válidos al identificador
+                while (index < codigoFuente.length()) {
+                    char nextChar = codigoFuente.charAt(index);
+                    if (Character.isLetterOrDigit(nextChar) || nextChar == '_') {
+                        identificador.append(nextChar);
+                        index++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                String token = identificador.toString();
+                
+                // Verificar si el token es una palabra reservada
+                if (PALABRAS_RESERVADAS.contains(token)) {
+                    printPos(fila,columna);
+                    System.out.println("Palabra reservada: " + token);
+                } else {
+                    printPos(fila,columna);
+                    System.out.println("Identificador: " + token);
+                }
+                
+                continue;
+            }
+            
+            ////////////////////////////////////////////Revisa cadena
+            if (currentChar == '"') {
+                StringBuilder cadena = new StringBuilder();
+                cadena.append(currentChar);
+                index++;
+                
+                // Continuar agregando caracteres válidos a la cadena
+                while (index < codigoFuente.length()) {
+                    char nextChar = codigoFuente.charAt(index);
+                    if (nextChar=='"'){
+                        cadena.append(nextChar);
+                        index++;
+                        break;
+                    }else if (Character.isLetterOrDigit(nextChar) || nextChar == '_' || 
+                        nextChar ==' ') {
+                        cadena.append(nextChar);
+                        index++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                String token = cadena.toString();
+                printPos(fila,columna);
+                System.out.println("Cadena: "+token);
+                
+                continue;
+            }
+
+            //////////////////////////////////////////// revisa número
+            if (Character.isDigit(currentChar)) {
+                StringBuilder numero = new StringBuilder();
+                numero.append(currentChar);
+                index++;
+                
+                // Continuar agregando dígitos al número
+                while (index < codigoFuente.length()) {
+                    char nextChar = codigoFuente.charAt(index);
+                    if (Character.isDigit(nextChar)) {
+                        numero.append(nextChar);
+                        index++;
+                    } else {
+                        break;
+                    }
+                }
+
+                printPos(fila,columna);
+                System.out.println("Número: " + numero.toString());
+                continue;
+            }
+        
+            // Continuamos si no cae en casos anteriores
+            index++;
+        }
+    }
+}
